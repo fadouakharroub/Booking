@@ -27,4 +27,4 @@ const login = async (req, res) => {
   res.header("auth-token", token).send(token);
 };
 
-// module.exports = { login , register};
+module.exports = { login , register};
