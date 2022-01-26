@@ -1,19 +1,30 @@
 const User = require("../models/User");
 const jwt = require('jsonwebtoken');
+const bcrypt = require("bcryptjs");
 
-// handle errors
-const handleErrors = (err) => {
-    console.log(err.message, err.code);
-    let errors = { email: '', password: '' };
-  
-// incorrect email
-    if (err.message === 'incorrect email') {
-      errors.email = 'That email is not registered';
-    }
-  
-// incorrect password
-    if (err.message === 'incorrect password') {
-      errors.password = 'That password is incorrect';
-    }
-    
+const register = async (req, res) => {
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(req.body.password, salt);
+  const user = await User.create({
+    name: req.body.name,
+    email: req.body.email,
+    password: hashedPassword,
+  })
+    res.send(user)
 };
+const login = async (req, res) => {
+  const user = await User.findOne({ email: req.body.email });
+  if (!user) return res.status(404).send("Email doesn't exist");
+
+  const validation = await bcrypt.compare(req.body.password, user.password);
+  if (!validation) return res.status(404).send("password wrong");
+
+  const token = jwt.sign({
+    _id: user.id,
+    name: user.firstName,
+  },"SECRET");
+
+  res.header("auth-token", token).send(token);
+};
+
+// module.exports = { login , register};
